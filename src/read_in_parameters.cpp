@@ -777,6 +777,27 @@ InitData read_in_parameters(std::string input_file) {
     }
     parameter_list.quest_revert_strength = temp_quest_revert_strength;
 
+    // Switch to use resummed transport coefficients
+    int tempFlagResum = 0;
+    tempinput = Util::StringFind4(input_file, "FlagResumTransportCoeff");
+    if (tempinput != "empty") {
+        istringstream(tempinput) >> tempFlagResum;
+    }
+    parameter_list.FlagResumTransportCoeff = (tempFlagResum == 1);
+    double tempResumAlpha = 1.5;
+    tempinput = Util::StringFind4(input_file, "resumTransCoeffAlpha");
+    if (tempinput != "empty") {
+        istringstream(tempinput) >> tempResumAlpha;
+    }
+    parameter_list.resumTransCoeffAlpha = tempResumAlpha;
+    // preEqVisFactor: scale of the initial viscous tensor (Initial_profile 9x)
+    double tempPreEqVisFactor = 1.0;
+    tempinput = Util::StringFind4(input_file, "preEqVisFactor");
+    if (tempinput != "empty") {
+        istringstream(tempinput) >> tempPreEqVisFactor;
+    }
+    parameter_list.preEqVisFactor = tempPreEqVisFactor;
+
     // Include_Bulk_Visc_Yes_1_No_0
     int tempturn_on_bulk = 0;
     tempinput = Util::StringFind4(input_file, "Include_Bulk_Visc_Yes_1_No_0");

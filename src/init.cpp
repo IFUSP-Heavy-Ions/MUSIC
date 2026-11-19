@@ -829,11 +829,15 @@ void Init::initial_IPGlasma_XY_with_pi(int ieta, Fields &arenaFieldsPrev,
             temp_profile_uy    [idx] = uy;
             temp_profile_ueta  [idx] = ueta;
             temp_profile_utau  [idx] = sqrt(1. + ux*ux + uy*uy + ueta*ueta);
-            temp_profile_pixx  [idx] = pixx*DATA.sFactor;
-            temp_profile_pixy  [idx] = pixy*DATA.sFactor;
-            temp_profile_pixeta[idx] = pixeta*tau0*DATA.sFactor;
-            temp_profile_piyy  [idx] = piyy*DATA.sFactor;
-            temp_profile_piyeta[idx] = piyeta*tau0*DATA.sFactor;
+            double visFactor = DATA.sFactor*DATA.preEqVisFactor;
+            if (DATA.FlagResumTransportCoeff) {
+                visFactor = DATA.sFactor;
+            }
+            temp_profile_pixx  [idx] = pixx*visFactor;
+            temp_profile_pixy  [idx] = pixy*visFactor;
+            temp_profile_pixeta[idx] = pixeta*tau0*visFactor;
+            temp_profile_piyy  [idx] = piyy*visFactor;
+            temp_profile_piyeta[idx] = piyeta*tau0*visFactor;
 
             utau = temp_profile_utau[idx];
             temp_profile_pietaeta[idx] = (
@@ -924,8 +928,19 @@ void Init::initial_IPGlasma_XY_with_pi(int ieta, Fields &arenaFieldsPrev,
 
                 if (DATA.Initial_profile == 9) {
                     double pressure = eos.get_pressure(epsilon, rhob);
-                    arenaFieldsCurr.piBulk_[Fidx] = epsilon/3. - pressure;
+                    arenaFieldsCurr.piBulk_[Fidx] = (
+                        (epsilon/3. - pressure)*DATA.preEqVisFactor);
                 }
+            }
+
+            if (DATA.FlagResumTransportCoeff) {
+                auto grid_c = arenaFieldsCurr.getCell(Fidx);
+                regulationResummedTransCoeff(grid_c);
+                for (int idx_1d = 0; idx_1d < 10; idx_1d++) {
+                    arenaFieldsCurr.Wmunu_[idx_1d][Fidx] = (
+                        grid_c.Wmunu[idx_1d]);
+                }
+                arenaFieldsCurr.piBulk_[Fidx] = grid_c.pi_b;
             }
 
             for (int i = 0; i < 4; i++) {
@@ -939,6 +954,39 @@ void Init::initial_IPGlasma_XY_with_pi(int ieta, Fields &arenaFieldsPrev,
             arenaFieldsPrev.piBulk_[Fidx] = arenaFieldsCurr.piBulk_[Fidx];
         }
     }
+}
+
+
+void Init::regulationResummedTransCoeff(Cell_small &grid_pt) {
+    double e_local = grid_pt.epsilon;
+    double rhob = grid_pt.rhob;
+    double p_local = eos.get_pressure(e_local, rhob);
+
+    double pi_00 = grid_pt.Wmunu[0];
+    double pi_01 = grid_pt.Wmunu[1];
+    double pi_02 = grid_pt.Wmunu[2];
+    double pi_03 = grid_pt.Wmunu[3];
+    double pi_11 = grid_pt.Wmunu[4];
+    double pi_12 = grid_pt.Wmunu[5];
+    double pi_13 = grid_pt.Wmunu[6];
+    double pi_22 = grid_pt.Wmunu[7];
+    double pi_23 = grid_pt.Wmunu[8];
+    double pi_33 = grid_pt.Wmunu[9];
+
+    double pisize = (
+           pi_00*pi_00 + pi_11*pi_11 + pi_22*pi_22 + pi_33*pi_33
+         - 2.*(pi_01*pi_01 + pi_02*pi_02 + pi_03*pi_03)
+         + 2.*(pi_12*pi_12 + pi_13*pi_13 + pi_23*pi_23));
+    double pi_local = grid_pt.pi_b;
+
+    double Rshear = sqrt(pisize)/(e_local + p_local + 1e-16);
+    double Rbulk = std::abs(pi_local)/(e_local + p_local + 1e-16);
+    double r_combined = 1.5*(Rshear + Rbulk) + 1e-16;
+    double renorm = std::min(1., DATA.preEqVisFactor/r_combined);
+    for (int mu = 0; mu < 10; mu++) {
+        grid_pt.Wmunu[mu] = renorm*grid_pt.Wmunu[mu];
+    }
+    grid_pt.pi_b = renorm*grid_pt.pi_b;
 }
 
 

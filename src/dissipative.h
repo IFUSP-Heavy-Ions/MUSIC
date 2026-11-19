@@ -48,6 +48,10 @@ class Diss {
                     std::array<double, 9> &w_rhs,
                     const double theta_local, const DumuVec &a_local);
 
+    void computeInverseReynoldsNumbers(
+        const double enthalpy, const Cell_small &grid_pt,
+        double &R_shear, double &R_bulk) const;
+
     double Make_uPiSource(const double tau, const Cell_small &grid_pt,
                           const double theta_local,
                           const VelocityShearVec &sigma_1d,

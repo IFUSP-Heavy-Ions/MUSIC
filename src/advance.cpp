@@ -363,11 +363,47 @@ void Advance::FirstRKStepW(const double tau, Fields &arenaFieldsPrev,
         if (DATA.turn_on_diff == 1) {
             QuestRevert_qmu(grid_f, ieta, ix, iy);
         }
+        if (DATA.FlagResumTransportCoeff) {
+            QuestRevertResummedTransCoeff(grid_f);
+        }
     }
     for (int idx_1d = 0; idx_1d < 14; idx_1d++) {
         arenaFieldsNext.Wmunu_[idx_1d][fieldIdx] = grid_f.Wmunu[idx_1d];
         arenaFieldsNext.piBulk_[fieldIdx] = grid_f.pi_b;
     }
+}
+
+
+void Advance::QuestRevertResummedTransCoeff(Cell_small &grid_pt) {
+    double e_local = grid_pt.epsilon;
+    double rhob = grid_pt.rhob;
+    double p_local = eos.get_pressure(e_local, rhob);
+
+    double pi_00 = grid_pt.Wmunu[0];
+    double pi_01 = grid_pt.Wmunu[1];
+    double pi_02 = grid_pt.Wmunu[2];
+    double pi_03 = grid_pt.Wmunu[3];
+    double pi_11 = grid_pt.Wmunu[4];
+    double pi_12 = grid_pt.Wmunu[5];
+    double pi_13 = grid_pt.Wmunu[6];
+    double pi_22 = grid_pt.Wmunu[7];
+    double pi_23 = grid_pt.Wmunu[8];
+    double pi_33 = grid_pt.Wmunu[9];
+
+    double pisize = (
+           pi_00*pi_00 + pi_11*pi_11 + pi_22*pi_22 + pi_33*pi_33
+         - 2.*(pi_01*pi_01 + pi_02*pi_02 + pi_03*pi_03)
+         + 2.*(pi_12*pi_12 + pi_13*pi_13 + pi_23*pi_23));
+    double pi_local = grid_pt.pi_b;
+
+    double Rshear = sqrt(pisize)/(e_local + p_local + 1e-16);
+    double Rbulk = std::abs(pi_local)/(e_local + p_local + 1e-16);
+    double r_combined = 1.5*(Rshear + Rbulk) + 1e-16;
+    double renorm = std::min(1., (1. - 1e-6)/r_combined);
+    for (int mu = 0; mu < 10; mu++) {
+        grid_pt.Wmunu[mu] = renorm*grid_pt.Wmunu[mu];
+    }
+    grid_pt.pi_b = renorm*grid_pt.pi_b;
 }
 
 

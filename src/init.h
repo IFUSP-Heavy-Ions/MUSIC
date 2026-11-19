@@ -60,6 +60,7 @@ class Init {
                              Fields &arenaFieldsCurr);
     void initial_IPGlasma_XY_with_pi(int ieta, Fields &arenaFieldsPrev,
                                      Fields &arenaFieldsCurr);
+    void regulationResummedTransCoeff(Cell_small &grid_pt);
     void initial_with_zero_XY(int ieta, Fields &arenaFieldsPrev,
                               Fields &arenaFieldsCurr);
 

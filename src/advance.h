@@ -51,6 +51,7 @@ class Advance {
                       const int ieta, const int ix, const int iy,
                       const int fieldIdx);
 
+    void QuestRevertResummedTransCoeff(Cell_small &grid_pt);
     void QuestRevert(Cell_small &grid_pt,
                      const int ieta, const int ix, const int iy);
     void QuestRevert_qmu(Cell_small &grid_pt,

@@ -72,6 +72,9 @@ class TransportCoeffs {
     double get_l_qpi_coeff() const { return(0.); }
     double get_lambda_qpi_coeff() const { return(0.); }
 
+    double getResummedCorrFactor(const double Rshear,
+                                 const double Rbulk) const;
+
 };
 
 #endif  // SRC_TRANSPORT_H_
