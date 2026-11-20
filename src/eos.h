@@ -3,6 +3,7 @@
 #ifndef SRC_EOS_H_
 #define SRC_EOS_H_
 
+#include "data.h"
 #include "eos_base.h"
 #include <memory>
 #include <vector>
@@ -17,6 +18,7 @@ class EOS {
  public:
     EOS() = delete;
     EOS(const int eos_id_in);
+    EOS(const int eos_id_in, const InitData &DATA_in);
 
     ~EOS() {};
 

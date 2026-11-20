@@ -6,6 +6,9 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
+#include <algorithm>
+#include <cmath>
+#include <iostream>
 
 using std::ostringstream;
 using std::setw;
@@ -29,6 +32,47 @@ EOS_base::~EOS_base() {
         delete[] pressure_tb;
         delete[] temperature_tb;
     }
+}
+
+
+double EOS_base::interpolate1D_nonuniform(double e, const int table_idx,
+                                          double ***table_x, double ***table_y,
+                                          double asymptotic_value) const {
+    // from luizafperin/MUSIC (main, ad67922)
+    const int N_e = e_length[table_idx];
+    const double *xe = table_x[table_idx][0];
+    const double *ye = table_y[table_idx][0];
+
+    if (e < xe[0]) {
+        std::cerr << "Energy point out of table limits (below)" << std::endl;
+        exit(1);
+    }
+
+    // extrapolation above the table
+    if (e >= xe[N_e - 1]) {
+        const double x0 = xe[N_e - 1];
+        const double y0 = ye[N_e - 1];
+        const double x1 = xe[N_e - 2];
+        const double y1 = ye[N_e - 2];
+        const double slope = (y0 - y1)/(x0 - x1);
+        const double delta = asymptotic_value - y0;
+        if (std::abs(delta) < 1e-12 || std::abs(slope) < 1e-12) {
+            return asymptotic_value;
+        }
+        if (delta*slope <= 0) {
+            std::cerr << "Slope not pointing toward asymptote" << std::endl;
+            exit(1);
+        }
+        const double k = slope/delta;
+        return asymptotic_value - delta*std::exp(-k*(e - x0));
+    }
+
+    // linear interpolation inside the table
+    int i = static_cast<int>(std::upper_bound(xe, xe + N_e, e) - xe) - 1;
+    if (i < 0) i = 0;
+    if (i > N_e - 2) i = N_e - 2;
+    const double frac = (e - xe[i])/(xe[i + 1] - xe[i]);
+    return ye[i]*(1.0 - frac) + ye[i + 1]*frac;
 }
 
 

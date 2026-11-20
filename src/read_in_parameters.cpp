@@ -284,6 +284,35 @@ InitData read_in_parameters(std::string input_file) {
         istringstream(tempinput) >> tempwhichEOS;
     parameter_list.whichEOS = tempwhichEOS;
 
+    // EOS_to_use 24: which table of the tabulated (GP) EoS ensemble
+    if (parameter_list.whichEOS == 24) {
+        int temp_l = 400, temp_sigma = 15, temp_Tsw = 150;
+        tempinput = Util::StringFind4(input_file, "EOS_gp_l");
+        if (tempinput != "empty") istringstream(tempinput) >> temp_l;
+        tempinput = Util::StringFind4(input_file, "EOS_gp_sigma");
+        if (tempinput != "empty") istringstream(tempinput) >> temp_sigma;
+        tempinput = Util::StringFind4(input_file, "T_sw");
+        if (tempinput != "empty") istringstream(tempinput) >> temp_Tsw;
+        parameter_list.EOS_gp_l = temp_l;
+        parameter_list.EOS_gp_sigma = temp_sigma;
+        parameter_list.T_sw = temp_Tsw;
+        tempinput = Util::StringFind4(input_file, "EOS_gp_type");
+        parameter_list.EOS_gp_type = (tempinput != "empty") ? tempinput : "hrg";
+        tempinput = Util::StringFind4(input_file, "EOS_gp_sample");
+        parameter_list.EOS_gp_sample = (tempinput != "empty") ? tempinput : "s0";
+        tempinput = Util::StringFind4(input_file, "gp_type");
+        parameter_list.gp_type = (tempinput != "empty") ? tempinput : "constrained";
+        tempinput = Util::StringFind4(input_file, "EOS_gp_mean");
+        parameter_list.EOS_gp_mean = (tempinput != "empty") ? tempinput : "0_3";
+        if (parameter_list.EOS_gp_l <= 0 || parameter_list.EOS_gp_sigma <= 0) {
+            music_message << "Invalid EOS_gp parameters: l="
+                          << parameter_list.EOS_gp_l
+                          << ", sigma=" << parameter_list.EOS_gp_sigma;
+            music_message.flush("error");
+            exit(1);
+        }
+    }
+
     // number_of_particles_to_include:
     // This determines up to which particle in the list spectra
     // should be computed (mode=3) or resonances should be included (mode=4)
@@ -1397,7 +1426,8 @@ void check_parameters(InitData &parameter_list) {
         }
     }
 
-    if ((parameter_list.whichEOS > 20 && parameter_list.whichEOS != 91)
+    if ((parameter_list.whichEOS > 20 && parameter_list.whichEOS != 91
+         && parameter_list.whichEOS != 24)
         || parameter_list.whichEOS < 0) {
         music_message << "EOS_to_use unspecified or invalid option: "
                       << parameter_list.whichEOS;

@@ -61,6 +61,11 @@ class EOS_base {
     double interpolate1D(double e, int table_idx, double ***table) const;
     void interpolate1D_with_gradients(double e, int table_idx, double ***table,
                                       double &p, double &dpde) const;
+    // y(e) from tables x[i], y[i] on a non-uniform, increasing grid in e;
+    // above the table an exponential approach to asymptotic_value
+    double interpolate1D_nonuniform(double e, const int table_idx,
+                                    double ***table_x, double ***table_y,
+                                    double asymptotic_value) const;
     double interpolate2D(const double e, const double rhob,
                          const int table_idx, double ***table) const;
     void interpolate2D_with_gradients(const double e, const double rhob,

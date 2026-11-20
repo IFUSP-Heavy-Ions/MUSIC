@@ -99,6 +99,14 @@ typedef struct init_data {
 
     double sFactor;     //!< overall normalization on energy density profile
     int whichEOS;       //!< type of EoS
+    // EOS_to_use 24 (tabulated EoS, see eos_gp.h)
+    int EOS_gp_l;              //!< correlation length of the GP sample
+    int EOS_gp_sigma;          //!< GP width
+    int T_sw;                  //!< switching temperature of the table [MeV]
+    std::string EOS_gp_type;   //!< hrg, pwr or w
+    std::string EOS_gp_sample; //!< s0, s1, ...
+    std::string gp_type;       //!< constrained, unconstrained, training
+    std::string EOS_gp_mean;   //!< GP mean folder of unconstrained samples
     //! flag for boost invariant simulations
     bool boost_invariant;
 

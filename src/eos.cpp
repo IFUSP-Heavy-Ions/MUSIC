@@ -10,6 +10,7 @@
 #include "eos_neos.h"
 #include "eos_UH.h"
 #include "eos_4D.h"
+#include "eos_gp.h"
 #include <iostream>
 #include <memory>
 
@@ -33,9 +34,24 @@ EOS::EOS(const int eos_id_in) : eos_id(eos_id_in)  {
     } else if (eos_id == 20) {
             eos_ptr = std::unique_ptr<EOS_4D> (new EOS_4D ());
     } else {
-        std::cout << "No EOS for eos_id = " << std::endl;
+        std::cout << "No EOS for eos_id = " << eos_id << std::endl;
         exit(1);
     }
     eos_ptr->initialize_eos();
+}
+
+//! The EoS with the settings it may need from the input file (the
+//! tabulated EoS 24 needs to know which table); any other EoS as above.
+EOS::EOS(const int eos_id_in, const InitData &DATA_in) : eos_id(eos_id_in) {
+    if (eos_id == 24) {
+        eos_ptr = std::unique_ptr<EOS_gp>(new EOS_gp(
+            eos_id, DATA_in.EOS_gp_l, DATA_in.EOS_gp_sigma, DATA_in.T_sw,
+            DATA_in.EOS_gp_type, DATA_in.EOS_gp_sample, DATA_in.gp_type,
+            DATA_in.EOS_gp_mean));
+        eos_ptr->initialize_eos();
+    } else {
+        EOS other(eos_id_in);
+        eos_ptr = std::move(other.eos_ptr);
+    }
 }
 
